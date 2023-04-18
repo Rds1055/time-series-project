@@ -42,3 +42,13 @@ nfl.cumulative.ts = ts(nfl.cumulative$attendance, start = c(2000, 1), frequency 
 tsplot(nfl.cumulative.ts)
 ```
 
+# ACF and Spectral Density
+
+```{r}
+acf(nfl.cumulative.ts)
+```
+
+```{r}
+specDensity = parzen.wge(nfl.cumulative.ts)
+```
+
