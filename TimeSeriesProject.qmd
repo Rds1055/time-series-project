@@ -1,0 +1,6 @@
+---
+title: "Time Series Project"
+author: "AnnaMarie Fernandes and Ryan Schaefer"
+format: pdf
+---
+
