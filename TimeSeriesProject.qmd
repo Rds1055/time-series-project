@@ -4,9 +4,41 @@ author: "AnnaMarie Fernandes and Ryan Schaefer"
 format: pdf
 ---
 
-# Testing
+# Import Dependencies
 
 ```{r}
+#| message: false
+#| warning: false
 
+library(astsa)
+library(tidyverse)
+library(tswge)
+```
+
+
+# Import Data
+
+```{r}
+nfl = read.csv("nfl_attendance.csv")
+
+head(nfl)
+```
+
+# Format Data
+
+```{r}
+nfl.cumulative = nfl %>%
+  group_by(year, week) %>%
+  summarize(attendance = sum(weekly_attendance, na.rm = TRUE))
+
+head(nfl.cumulative)
+```
+
+# Plot Time Series
+
+```{r}
+nfl.cumulative.ts = ts(nfl.cumulative$attendance, start = c(2000, 1), frequency = 17)
+
+tsplot(nfl.cumulative.ts)
 ```
 
