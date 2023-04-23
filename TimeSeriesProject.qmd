@@ -13,6 +13,8 @@ format: pdf
 library(astsa)
 library(tidyverse)
 library(tswge)
+library(tseries)
+library(forecast)
 ```
 
 
@@ -29,7 +31,8 @@ head(nfl)
 ```{r}
 nfl.cumulative = nfl %>%
   group_by(year, week) %>%
-  summarize(attendance = sum(weekly_attendance, na.rm = TRUE))
+  summarize(attendance = sum(weekly_attendance, na.rm = TRUE)) %>%
+  ungroup()
 
 head(nfl.cumulative)
 ```
@@ -42,13 +45,52 @@ nfl.cumulative.ts = ts(nfl.cumulative$attendance, start = c(2000, 1), frequency 
 tsplot(nfl.cumulative.ts)
 ```
 
-# ACF and Spectral Density
+# ACF, PACF and Spectral Density
 
 ```{r}
 acf(nfl.cumulative.ts)
 ```
 
 ```{r}
+pacf(nfl.cumulative.ts)
+```
+
+
+```{r}
 specDensity = parzen.wge(nfl.cumulative.ts)
 ```
+
+# Check for stationarity
+
+```{r}
+adf.test(nfl.cumulative.ts)
+```
+
+# Fit ARMA Model
+
+```{r}
+#| warning: false
+
+types = c("aic", "bic", "aicc")
+selections = list()
+
+for (i in 1:length(types)) {
+    output = aic.wge(nfl.cumulative.ts, p = 0:10, q = 0:10, type = types[i])
+    selections[[i]] = output
+    print(paste("Type: ", types[i], ", AR Order: ", output$p, ", MA Order: ", output$q, sep = ""))
+}
+```
+
+```{r}
+selections[[1]]
+```
+
+# Forecasting
+
+```{r}
+forecast = fore.arma.wge(nfl.cumulative.ts, phi = selections[[1]]$phi, theta = selections[[1]]$theta , n.ahead = 20 , limits = TRUE)
+```
+
+
+
 
