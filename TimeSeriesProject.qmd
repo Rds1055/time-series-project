@@ -42,3 +42,19 @@ nfl.cumulative.ts = ts(nfl.cumulative$attendance, start = c(2000, 1), frequency 
 tsplot(nfl.cumulative.ts)
 ```
 
+```{r}
+#| warning: false
+aic5.ar.wge(nfl.cumulative.ts, p = 0:10)
+#the top model (question 6.5 in the textbook)
+```
+
+```{r}
+y.ml = est.ar.wge(nfl.cumulative.ts,p=6)
+
+```
+
+
+
+
+
+
