@@ -66,6 +66,24 @@ specDensity = parzen.wge(nfl.cumulative.ts)
 adf.test(nfl.cumulative.ts)
 ```
 
+# Training/Testing Split
+
+```{r}
+nfl.training = nfl.cumulative %>%
+  dplyr::filter(year < 2019)
+
+nfl.testing = nfl.cumulative %>%
+  dplyr::filter(year == 2019)
+```
+
+# Additive Seasonal Model
+
+```{r}
+
+```
+
+
+
 # Fit ARMA Model
 
 ```{r}
@@ -85,24 +103,33 @@ for (i in 1:length(types)) {
 selections[[1]]
 ```
 
+```{r}
+factor.wge(phi = selections[[1]]$phi, theta = selections[[1]]$theta)
+```
+
+# Additive Seasonal Model
+
+```{r}
+
+```
+
+
+
 # Forecasting
 
 ```{r}
-forecast = fore.arma.wge(nfl.cumulative.ts, phi = selections[[1]]$phi, theta = selections[[1]]$theta , n.ahead = 20 , limits = TRUE)
+forecast = fore.arma.wge(nfl.cumulative.ts, phi = selections[[1]]$phi, theta = selections[[1]]$theta, n.ahead = 17, limits = TRUE)
 ```
 
 ```{r}
-#| warning: false
-aic5.ar.wge(nfl.cumulative.ts, p = 0:10)
-#the top model (question 6.5 in the textbook)
+forecast2 = sarima.for(nfl.cumulative.ts, n.ahead = 17, p = 6, q = 7, d = 0, plot.all = TRUE)
 ```
 
 ```{r}
-y.ml = est.ar.wge(nfl.cumulative.ts,p=6)
-
+forecast3 = fore.arma.wge(nfl.cumulative.ts, phi = selections[[1]]$phi, theta = selections[[1]]$theta, n.ahead = 17, limits = TRUE, lastn = TRUE)
 ```
 
-
-
-
+```{r}
+forecast3$rmse
+```
 
