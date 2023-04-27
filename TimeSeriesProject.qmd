@@ -72,16 +72,57 @@ adf.test(nfl.cumulative.ts)
 nfl.training = nfl.cumulative %>%
   dplyr::filter(year < 2019)
 
+nfl.training.ts = ts(nfl.training$attendance, start = c(2000, 1), frequency = 17)
+
 nfl.testing = nfl.cumulative %>%
   dplyr::filter(year == 2019)
+
+nfl.testing.ts = ts(nfl.testing$attendance, start = c(2019, 1), frequency = 17)
 ```
 
-# Additive Seasonal Model
+# Additive Holt Winters Model
 
 ```{r}
-
+decomp.obj = decompose(nfl.training.ts) # uses moving average smoother
+plot(decomp.obj)
 ```
 
+```{r}
+hwModel = HoltWinters(nfl.training.ts)
+hwForecast = forecast(
+  hwModel,
+  h = 17
+)
+
+tsplot(
+  nfl.cumulative.ts,
+  main = "NFL Total Attendance Over Time Holt Winters Model",
+  ylab = "NFL Total Attendance"
+)
+lines(hwForecast$fitted, col = "red")
+lines(hwForecast$mean, col = "blue")
+
+legend(
+  "topleft", 
+  legend = c("Observed", "Holt Winters Fit", "Holt Winters Forecast"), 
+  lty = c(1, 1), 
+  col = c("black", "red", "blue")
+)
+```
+
+```{r}
+acf(HW1_for$residuals, lag.max=20, na.action=na.pass)
+Box.test(HW1_for$residuals, lag=20, type="Ljung-Box")
+hist(HW1_for$residuals)
+```
+
+## Model Evaluation
+
+```{r}
+hwResiduals = hwForecast$mean - nfl.testing.ts
+acf(hwResiduals)
+Box.test(hwResiduals)
+```
 
 
 # Fit ARMA Model
