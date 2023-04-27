@@ -82,6 +82,8 @@ nfl.testing.ts = ts(nfl.testing$attendance, start = c(2019, 1), frequency = 17)
 
 # Additive Holt Winters Model
 
+## Fit Model
+
 ```{r}
 decomp.obj = decompose(nfl.training.ts) # uses moving average smoother
 plot(decomp.obj)
@@ -110,12 +112,6 @@ legend(
 )
 ```
 
-```{r}
-acf(HW1_for$residuals, lag.max=20, na.action=na.pass)
-Box.test(HW1_for$residuals, lag=20, type="Ljung-Box")
-hist(HW1_for$residuals)
-```
-
 ## Model Evaluation
 
 ```{r}
@@ -130,14 +126,18 @@ Box.test(hwResiduals)
 ```{r}
 #| warning: false
 
-types = c("aic", "bic", "aicc")
-selections = list()
+# types = c("aic", "bic", "aicc")
+# selections = list()
+# 
+# for (i in 1:length(types)) {
+#     output = aic.wge(nfl.cumulative.ts, p = 0:10, q = 0:10, type = types[i])
+#     selections[[i]] = output
+#     print(paste("Type: ", types[i], ", AR Order: ", output$p, ", MA Order: ", output$q, sep = ""))
+# }
 
-for (i in 1:length(types)) {
-    output = aic.wge(nfl.cumulative.ts, p = 0:10, q = 0:10, type = types[i])
-    selections[[i]] = output
-    print(paste("Type: ", types[i], ", AR Order: ", output$p, ", MA Order: ", output$q, sep = ""))
-}
+selections = list()
+selections[[1]] = aic.wge(nfl.cumulative.ts, p = 0:10, q = 0:10, type = "aic")
+print(paste("AR Order: ", selections[[1]]$p, ", MA Order: ", selections[[1]]$q, sep = ""))
 ```
 
 ```{r}
