@@ -72,15 +72,22 @@ adf.test(nfl.cumulative.ts)
 nfl.training = nfl.cumulative %>%
   dplyr::filter(year < 2019)
 
+nfl.training.ts = ts(nfl.training$attendance, start = c(2000,1), frequency = 17)
+
+nfl.testing = nfl.cumulative %>% 
+  dplyr::filter(year == 2019)
+
 nfl.testing = nfl.cumulative %>%
   dplyr::filter(year == 2019)
 ```
 
-# Additive Seasonal Model
+# sarima 
 
 ```{r}
-
+sarima.for(nfl.cumulative.ts , n.ahead = 17, p=6,d=0,q=7,P=0,D=1,Q=0,S=17 )
 ```
+
+
 
 
 
@@ -107,11 +114,6 @@ selections[[1]]
 factor.wge(phi = selections[[1]]$phi, theta = selections[[1]]$theta)
 ```
 
-# Additive Seasonal Model
-
-```{r}
-
-```
 
 
 
