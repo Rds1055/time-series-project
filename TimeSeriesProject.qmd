@@ -22,7 +22,9 @@ library(knitr)
 # Import Data
 
 ```{r}
-nfl = read.csv("nfl_attendance.csv")
+# nfl = read.csv("nfl_attendance.csv")
+# save(nfl, file = "nfl_attendance.RData")
+load("nfl_attendance.RData")
 
 head(nfl)
 ```
@@ -43,7 +45,11 @@ head(nfl.cumulative)
 ```{r}
 nfl.cumulative.ts = ts(nfl.cumulative$attendance, start = c(2000, 1), frequency = 17)
 
-tsplot(nfl.cumulative.ts)
+tsplot(
+  nfl.cumulative.ts, 
+  main = "NFL Total Attendance Over Time",
+  ylab = "Total Attendance"
+)
 ```
 
 # ACF, PACF and Spectral Density
@@ -97,7 +103,7 @@ hwForecast = forecast(
 tsplot(
   nfl.cumulative.ts,
   main = "NFL Total Attendance Over Time Holt Winters Additive Model",
-  ylab = "NFL Total Attendance"
+  ylab = "Total Attendance"
 )
 lines(hwForecast$fitted, col = "red")
 lines(hwForecast$mean, col = "blue")
@@ -134,7 +140,7 @@ hwForecast2 = forecast(
 tsplot(
   nfl.cumulative.ts,
   main = "NFL Total Attendance Over Time Holt Winters Multiplicative Model",
-  ylab = "NFL Total Attendance"
+  ylab = "Total Attendance"
 )
 lines(hwForecast2$fitted, col = "red")
 lines(hwForecast2$mean, col = "blue")
@@ -183,7 +189,7 @@ sarimaFit = nfl.training.ts - sarimaModel$residuals
 tsplot(
   nfl.cumulative.ts,
   main = "NFL Total Attendance Over Time SARIMA Model",
-  ylab = "NFL Total Attendance"
+  ylab = "Total Attendance"
 )
 lines(sarimaFit, col = "red")
 lines(sarimaForecast$pred, col = "blue")
@@ -244,7 +250,7 @@ ts.lmPredict = ts(lmModel.predict, start = c(2019, 1), frequency = 17)
 tsplot(
   nfl.cumulative.ts,
   main = "NFL Total Attendance Over Time Linear Regression Model",
-  ylab = "NFL Total Attendance"
+  ylab = "Total Attendance"
 )
 lines(ts.lmModel, col = "red")
 lines(ts.lmPredict, col = "blue")
