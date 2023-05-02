@@ -284,7 +284,9 @@ legend(
   col = c(
     "black", 
     "red", 
-    "blue"
+    "blue",
+    "green",
+    "orange"
   )
 )
 ```
