@@ -15,6 +15,7 @@ library(tidyverse)
 library(tswge)
 library(tseries)
 library(forecast)
+library(knitr)
 ```
 
 
@@ -80,20 +81,11 @@ nfl.testing = nfl.cumulative %>%
 nfl.testing.ts = ts(nfl.testing$attendance, start = c(2019, 1), frequency = 17)
 ```
 
-# sarima 
+# Holt Winters Model
 
-```{r}
-sarima.for(nfl.cumulative.ts , n.ahead = 17, p=6,d=0,q=7,P=0,D=1,Q=0,S=17 )
-```
+## Additive
 
-# Additive Holt Winters Model
-
-## Fit Model
-
-```{r}
-decomp.obj = decompose(nfl.training.ts) # uses moving average smoother
-plot(decomp.obj)
-```
+### Fit Model
 
 ```{r}
 hwModel = HoltWinters(nfl.training.ts)
@@ -104,16 +96,102 @@ hwForecast = forecast(
 
 tsplot(
   nfl.cumulative.ts,
-  main = "NFL Total Attendance Over Time Holt Winters Model",
+  main = "NFL Total Attendance Over Time Holt Winters Additive Model",
   ylab = "NFL Total Attendance"
 )
 lines(hwForecast$fitted, col = "red")
 lines(hwForecast$mean, col = "blue")
 
 legend(
-  "topleft", 
-  legend = c("Observed", "Holt Winters Fit", "Holt Winters Forecast"), 
-  lty = c(1, 1), 
+  "bottomright", 
+  legend = c("Observed", "Holt Winters Fit", "Holt Winters Additive Forecast"), 
+  lty = 1, 
+  col = c("black", "red", "blue")
+)
+```
+
+### Model Evaluation
+
+```{r}
+hwResiduals = hwForecast$mean - nfl.testing.ts
+acf(hwResiduals)
+Box.test(hwResiduals)
+rmse.hw = rmse(nfl.testing$attendance, hwForecast$mean)
+rmse.hw
+```
+
+## Multiplicative
+
+### Fit Model
+
+```{r}
+hwModel2 = HoltWinters(nfl.training.ts, seasonal = "multiplicative")
+hwForecast2 = forecast(
+  hwModel2,
+  h = 17
+)
+
+tsplot(
+  nfl.cumulative.ts,
+  main = "NFL Total Attendance Over Time Holt Winters Multiplicative Model",
+  ylab = "NFL Total Attendance"
+)
+lines(hwForecast2$fitted, col = "red")
+lines(hwForecast2$mean, col = "blue")
+
+legend(
+  "bottomright", 
+  legend = c("Observed", "Holt Winters Mult. Fit", "Holt Winters Mult. Forecast"), 
+  lty = 1, 
+  col = c("black", "red", "blue")
+)
+```
+
+### Model Evaluation
+
+```{r}
+hwResiduals2 = hwForecast2$mean - nfl.testing.ts
+acf(hwResiduals2)
+Box.test(hwResiduals2)
+rmse.hw2 = rmse(nfl.testing$attendance, hwForecast2$mean)
+rmse.hw2
+```
+
+# SARIMA
+
+## Determine Model Orders
+
+```{r}
+auto.arima(nfl.training.ts, approximation = FALSE)
+```
+
+## Fit Model
+
+```{r}
+# sarimaModel = sarima(nfl.training.ts, p=3, d=0, q=1, P=2, D=1, Q=1, S=17, details = FALSE)
+# sarimaForecast = sarima.for(nfl.training.ts, n.ahead = 17, p=3, d=0, q=1, P=2, D=1, Q=1, S=17, plot = FALSE)
+
+sarimaModel = arima(nfl.training.ts, order = c(1, 0, 1), seasonal = list(order = c(0, 1, 1), period = 17))
+sarimaForecast = predict(sarimaModel, n.ahead = 17)
+```
+
+
+
+```{r}
+sarimaFit = nfl.training.ts - sarimaModel$residuals
+
+tsplot(
+  nfl.cumulative.ts,
+  main = "NFL Total Attendance Over Time SARIMA Model",
+  ylab = "NFL Total Attendance"
+)
+lines(sarimaFit, col = "red")
+lines(sarimaForecast$pred, col = "blue")
+
+legend(
+  "bottomright", 
+  legend = c("Observed", "SARIMA Fit", "SARIMA Forecast"), 
+  lty = 1, 
   col = c("black", "red", "blue")
 )
 ```
@@ -121,59 +199,129 @@ legend(
 ## Model Evaluation
 
 ```{r}
-hwResiduals = hwForecast$mean - nfl.testing.ts
-acf(hwResiduals)
-Box.test(hwResiduals)
+sarimResiduals = sarimaForecast$pred - nfl.testing.ts
+acf(sarimResiduals)
+Box.test(sarimResiduals)
+rmse.sarima = rmse(nfl.testing$attendance, sarimaForecast$pred)
+rmse.sarima
 ```
 
 
+# Linear Regression
 
-
-# Fit ARMA Model
+## Fit Model
 
 ```{r}
-#| warning: false
+nfl.cumulative2 = nfl.cumulative[18:nrow(nfl.cumulative),] %>%
+  mutate(
+    t = 18:nrow(nfl.cumulative),
+    sin17 = sin((2 * pi * t) / 17),
+    cos17 = cos((2 * pi * t) / 17),
+    attendance.lag = nfl.cumulative$attendance[t - 17]
+  )
 
-# types = c("aic", "bic", "aicc")
-# selections = list()
-# 
-# for (i in 1:length(types)) {
-#     output = aic.wge(nfl.cumulative.ts, p = 0:10, q = 0:10, type = types[i])
-#     selections[[i]] = output
-#     print(paste("Type: ", types[i], ", AR Order: ", output$p, ", MA Order: ", output$q, sep = ""))
-# }
-
-selections = list()
-selections[[1]] = aic.wge(nfl.cumulative.ts, p = 0:10, q = 0:10, type = "aic")
-print(paste("AR Order: ", selections[[1]]$p, ", MA Order: ", selections[[1]]$q, sep = ""))
+head(nfl.cumulative2)
 ```
 
 ```{r}
-selections[[1]]
+nfl.cumulative2.training = nfl.cumulative2 %>%
+  filter(year < 2019)
+
+nfl.cumulative2.testing = nfl.cumulative2 %>%
+  filter(year == 2019)
+
+lmModel = lm(attendance ~ sin17 + cos17 + attendance.lag, data = nfl.cumulative2.training)
+
+summary(lmModel)
 ```
 
 ```{r}
-factor.wge(phi = selections[[1]]$phi, theta = selections[[1]]$theta)
+lmModel.predict = predict(lmModel, newdata = nfl.cumulative2.testing)
+
+ts.lmModel = ts(lmModel$fitted.values, start = c(2001, 1), frequency = 17)
+ts.lmPredict = ts(lmModel.predict, start = c(2019, 1), frequency = 17)
+
+tsplot(
+  nfl.cumulative.ts,
+  main = "NFL Total Attendance Over Time Linear Regression Model",
+  ylab = "NFL Total Attendance"
+)
+lines(ts.lmModel, col = "red")
+lines(ts.lmPredict, col = "blue")
+
+legend(
+  "bottomright", 
+  legend = c("Observed", "Linear Regression Fit", "Linear Regression Forecast"), 
+  lty = 1, 
+  col = c("black", "red", "blue")
+)
+```
+
+## Model Evalutation
+
+```{r}
+acf(lmModel$residuals)
+Box.test(lmModel$residuals)
+rmse.lm = rmse(nfl.cumulative2.testing$attendance, lmModel.predict)
+rmse.lm
+```
+
+# Final Results
+
+```{r}
+plot(
+  nfl.testing.ts,
+  main = "2019 NFL Total Attendance vs Model Forecasts",
+  ylab = "Total Attendance"
+)
+
+lines(hwForecast$mean, col = "red")
+lines(hwForecast2$mean, col = "blue")
+lines(sarimaForecast$pred, col = "green")
+lines(ts.lmPredict, col = "orange")
+
+legend(
+  "bottomright", 
+  legend = c(
+    "Observed", 
+    "Additive HW", 
+    "Multiplicative HW",
+    "SARIMA",
+    "Linear Regression"
+  ), 
+  lty = 1, 
+  col = c(
+    "black", 
+    "red", 
+    "blue",
+    "green",
+    "orange"
+  )
+)
 ```
 
 
-
-
-# Forecasting
-
 ```{r}
-forecast = fore.arma.wge(nfl.cumulative.ts, phi = selections[[1]]$phi, theta = selections[[1]]$theta, n.ahead = 17, limits = TRUE)
-```
-
-```{r}
-forecast2 = sarima.for(nfl.cumulative.ts, n.ahead = 17, p = 6, q = 7, d = 0, plot.all = TRUE)
-```
-
-```{r}
-forecast3 = fore.arma.wge(nfl.cumulative.ts, phi = selections[[1]]$phi, theta = selections[[1]]$theta, n.ahead = 17, limits = TRUE, lastn = TRUE)
-```
-
-```{r}
-forecast3$rmse
+data.frame(
+  model = c(
+    "Holt Winters Additive",
+    "Holt Winters Multiplicative",
+    "SARIMA",
+    "Linear Regression"
+  ),
+  rmse = c(
+    rmse.hw,
+    rmse.hw2,
+    rmse.sarima,
+    rmse.lm
+  )
+) %>%
+  kable(
+    col.names = c(
+      "Model Type",
+      "RMSE"
+    ),
+    caption = "RMSE of NFL Attendance Forecasts"
+  )
 ```
 
