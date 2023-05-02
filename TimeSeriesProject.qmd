@@ -80,17 +80,14 @@ nfl.testing = nfl.cumulative %>%
 nfl.testing.ts = ts(nfl.testing$attendance, start = c(2019, 1), frequency = 17)
 ```
 
-# Additive Holt Winters Model
+# Holt Winters Model
 
-## Fit Model
+## Additive
 
-```{r}
-decomp.obj = decompose(nfl.training.ts) # uses moving average smoother
-plot(decomp.obj)
-```
+### Fit Model
 
 ```{r}
-hwModel = HoltWinters(nfl.training.ts)
+hwModel = HoltWinters(nfl.training.ts, seasonal = "additive")
 hwForecast = forecast(
   hwModel,
   h = 17
@@ -98,7 +95,7 @@ hwForecast = forecast(
 
 tsplot(
   nfl.cumulative.ts,
-  main = "NFL Total Attendance Over Time Holt Winters Model",
+  main = "NFL Total Attendance Over Time Holt Winters Additive Model",
   ylab = "NFL Total Attendance"
 )
 lines(hwForecast$fitted, col = "red")
@@ -106,18 +103,147 @@ lines(hwForecast$mean, col = "blue")
 
 legend(
   "topleft", 
-  legend = c("Observed", "Holt Winters Fit", "Holt Winters Forecast"), 
+  legend = c("Observed", "Holt Winters Fit", "Holt Winters Additive Forecast"), 
   lty = c(1, 1), 
   col = c("black", "red", "blue")
 )
+
+rmse(nfl.testing$attendance, hwForecast$mean)
 ```
 
-## Model Evaluation
+```{r}
+hwModel2 = HoltWinters(nfl.training.ts, seasonal = "multiplicative")
+hwForecast2 = forecast(
+  hwModel,
+  h = 17
+)
+
+tsplot(
+  nfl.cumulative.ts,
+  main = "NFL Total Attendance Over Time Holt Winters Multiplicative Model",
+  ylab = "NFL Total Attendance"
+)
+lines(hwForecast2$fitted, col = "red")
+lines(hwForecast2$mean, col = "blue")
+
+legend(
+  "topleft", 
+  legend = c("Observed", "Holt Winters Mult. Fit", "Holt Winters Mult. Forecast"), 
+  lty = c(1, 1), 
+  col = c("black", "red", "blue")
+)
+
+rmse(nfl.testing$attendance, hwForecast2$mean)
+```
+
+### Model Evaluation
 
 ```{r}
 hwResiduals = hwForecast$mean - nfl.testing.ts
 acf(hwResiduals)
 Box.test(hwResiduals)
+```
+
+## Multiplicative
+
+### Fit Model
+
+```{r}
+hwModel2 = HoltWinters(nfl.training.ts, seasonal = "multiplicative")
+hwForecast2 = forecast(
+  hwModel,
+  h = 17
+)
+
+tsplot(
+  nfl.cumulative.ts,
+  main = "NFL Total Attendance Over Time Holt Winters Multiplicative Model",
+  ylab = "NFL Total Attendance"
+)
+lines(hwForecast2$fitted, col = "red")
+lines(hwForecast2$mean, col = "blue")
+
+legend(
+  "topleft", 
+  legend = c("Observed", "Holt Winters Mult. Fit", "Holt Winters Mult. Forecast"), 
+  lty = c(1, 1), 
+  col = c("black", "red", "blue")
+)
+
+rmse(nfl.testing$attendance, hwForecast2$mean)
+```
+
+### Model Evaluation
+
+```{r}
+hwResiduals = hwForecast$mean - nfl.testing.ts
+acf(hwResiduals)
+Box.test(hwResiduals)
+```
+
+# Linear Regression
+
+## Fit Model
+
+```{r}
+nfl.cumulative2 = nfl.cumulative[18:nrow(nfl.cumulative),] %>%
+  mutate(
+    t = 18:nrow(nfl.cumulative),
+    sin17 = sin((2 * pi * t) / 17),
+    cos17 = cos((2 * pi * t) / 17),
+    attendance.lag = nfl.cumulative$attendance[t - 17]
+  )
+
+head(nfl.cumulative2)
+```
+
+```{r}
+nfl.cumulative2.training = nfl.cumulative2 %>%
+  filter(year < 2019)
+
+nfl.cumulative2.testing = nfl.cumulative2 %>%
+  filter(year == 2019)
+
+lmModel = lm(attendance ~ sin17 + cos17 + attendance.lag, data = nfl.cumulative2.training)
+
+summary(lmModel)
+```
+
+```{r}
+acf(
+  model1$residuals,
+  main = "Autocorrelation of Linear Regression Residuals"
+)
+```
+
+```{r}
+lmModel.predict = predict(lmModel, newdata = nfl.cumulative2.testing)
+
+ts.lmModel = ts(lmModel$fitted.values, start = c(2001, 1), frequency = 17)
+ts.lmPredict = ts(lmModel, start = c(2019, 1), frequency = 17)
+
+tsplot(
+  nfl.cumulative.ts,
+  main = "NFL Total Attendance Over Time Holt Winters Multiplicative Model",
+  ylab = "NFL Total Attendance"
+)
+lines(hwForecast2$fitted, col = "red")
+lines(hwForecast2$mean, col = "blue")
+
+legend(
+  "topleft", 
+  legend = c("Observed", "Linear Regression Fit", "Linear Regression Forecast"), 
+  lty = 1, 
+  col = c("black", "red", "blue")
+)
+```
+
+## Model Evalutation
+
+```{r}
+acf(hwResiduals)
+Box.test(hwResiduals)
+rmse(nfl.cumulative2.testing$attendance, lmModel.predict)
 ```
 
 
