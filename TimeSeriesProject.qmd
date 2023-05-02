@@ -72,13 +72,12 @@ adf.test(nfl.cumulative.ts)
 nfl.training = nfl.cumulative %>%
   dplyr::filter(year < 2019)
 
-nfl.training.ts = ts(nfl.training$attendance, start = c(2000,1), frequency = 17)
-
-nfl.testing = nfl.cumulative %>% 
-  dplyr::filter(year == 2019)
+nfl.training.ts = ts(nfl.training$attendance, start = c(2000, 1), frequency = 17)
 
 nfl.testing = nfl.cumulative %>%
   dplyr::filter(year == 2019)
+
+nfl.testing.ts = ts(nfl.testing$attendance, start = c(2019, 1), frequency = 17)
 ```
 
 # sarima 
@@ -87,6 +86,45 @@ nfl.testing = nfl.cumulative %>%
 sarima.for(nfl.cumulative.ts , n.ahead = 17, p=6,d=0,q=7,P=0,D=1,Q=0,S=17 )
 ```
 
+# Additive Holt Winters Model
+
+## Fit Model
+
+```{r}
+decomp.obj = decompose(nfl.training.ts) # uses moving average smoother
+plot(decomp.obj)
+```
+
+```{r}
+hwModel = HoltWinters(nfl.training.ts)
+hwForecast = forecast(
+  hwModel,
+  h = 17
+)
+
+tsplot(
+  nfl.cumulative.ts,
+  main = "NFL Total Attendance Over Time Holt Winters Model",
+  ylab = "NFL Total Attendance"
+)
+lines(hwForecast$fitted, col = "red")
+lines(hwForecast$mean, col = "blue")
+
+legend(
+  "topleft", 
+  legend = c("Observed", "Holt Winters Fit", "Holt Winters Forecast"), 
+  lty = c(1, 1), 
+  col = c("black", "red", "blue")
+)
+```
+
+## Model Evaluation
+
+```{r}
+hwResiduals = hwForecast$mean - nfl.testing.ts
+acf(hwResiduals)
+Box.test(hwResiduals)
+```
 
 
 
@@ -96,14 +134,18 @@ sarima.for(nfl.cumulative.ts , n.ahead = 17, p=6,d=0,q=7,P=0,D=1,Q=0,S=17 )
 ```{r}
 #| warning: false
 
-types = c("aic", "bic", "aicc")
-selections = list()
+# types = c("aic", "bic", "aicc")
+# selections = list()
+# 
+# for (i in 1:length(types)) {
+#     output = aic.wge(nfl.cumulative.ts, p = 0:10, q = 0:10, type = types[i])
+#     selections[[i]] = output
+#     print(paste("Type: ", types[i], ", AR Order: ", output$p, ", MA Order: ", output$q, sep = ""))
+# }
 
-for (i in 1:length(types)) {
-    output = aic.wge(nfl.cumulative.ts, p = 0:10, q = 0:10, type = types[i])
-    selections[[i]] = output
-    print(paste("Type: ", types[i], ", AR Order: ", output$p, ", MA Order: ", output$q, sep = ""))
-}
+selections = list()
+selections[[1]] = aic.wge(nfl.cumulative.ts, p = 0:10, q = 0:10, type = "aic")
+print(paste("AR Order: ", selections[[1]]$p, ", MA Order: ", selections[[1]]$q, sep = ""))
 ```
 
 ```{r}
