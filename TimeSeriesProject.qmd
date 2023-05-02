@@ -159,17 +159,26 @@ rmse.hw2
 
 # SARIMA
 
+## Determine Model Orders
+
+```{r}
+auto.arima(nfl.training.ts, approximation = FALSE)
+```
+
 ## Fit Model
 
 ```{r}
-sarimaModel = sarima(nfl.training.ts, p=6,d=0,q=7,P=0,D=1,Q=0,S=17, details = FALSE)
-sarimaForecast = sarima.for(nfl.training.ts, n.ahead = 17, p=6,d=0,q=7,P=0,D=1,Q=0,S=17, plot = FALSE)
+# sarimaModel = sarima(nfl.training.ts, p=3, d=0, q=1, P=2, D=1, Q=1, S=17, details = FALSE)
+# sarimaForecast = sarima.for(nfl.training.ts, n.ahead = 17, p=3, d=0, q=1, P=2, D=1, Q=1, S=17, plot = FALSE)
+
+sarimaModel = arima(nfl.training.ts, order = c(1, 0, 1), seasonal = list(order = c(0, 1, 1), period = 17))
+sarimaForecast = predict(sarimaModel, n.ahead = 17)
 ```
 
 
 
 ```{r}
-sarimaFit = nfl.training.ts - sarimaModel$fit$residuals
+sarimaFit = nfl.training.ts - sarimaModel$residuals
 
 tsplot(
   nfl.cumulative.ts,
