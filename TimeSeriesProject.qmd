@@ -80,6 +80,12 @@ nfl.testing = nfl.cumulative %>%
 nfl.testing.ts = ts(nfl.testing$attendance, start = c(2019, 1), frequency = 17)
 ```
 
+# sarima 
+
+```{r}
+sarima.for(nfl.cumulative.ts , n.ahead = 17, p=6,d=0,q=7,P=0,D=1,Q=0,S=17 )
+```
+
 # Additive Holt Winters Model
 
 ## Fit Model
@@ -121,6 +127,8 @@ Box.test(hwResiduals)
 ```
 
 
+
+
 # Fit ARMA Model
 
 ```{r}
@@ -148,11 +156,6 @@ selections[[1]]
 factor.wge(phi = selections[[1]]$phi, theta = selections[[1]]$theta)
 ```
 
-# Additive Seasonal Model
-
-```{r}
-
-```
 
 
 
