@@ -29,6 +29,7 @@ tsplot(
 )
 
 # ACF and PACF
+par(mfrow = c(2, 1))
 acf(
   nfl.cumulative.ts,
   main = "Figure 2: NFL Total Attendance ACF"
@@ -37,6 +38,7 @@ pacf(
   nfl.cumulative.ts,
   main = "Figure 3: NFL Total Attendance PACF"
 )
+par(mfrow = c(1, 1))
 
 # Test for stationarity
 adf.test(nfl.cumulative.ts)
