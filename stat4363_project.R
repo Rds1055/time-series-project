@@ -78,7 +78,6 @@ legend(
 
 # Evaluate model performance
 hwResiduals = window(nfl.training.ts, start = 2001) - hwForecast$fitted
-acf(hwResiduals)
 Box.test(hwResiduals)
 rmse.hw = rmse(nfl.testing$attendance, hwForecast$mean)
 rmse.hw
@@ -109,7 +108,6 @@ legend(
 )
 
 # Evalutate model performance
-acf(sarimaModel$residuals)
 Box.test(sarimaModel$residuals)
 rmse.sarima = rmse(nfl.testing$attendance, sarimaForecast$pred)
 rmse.sarima
@@ -156,7 +154,6 @@ legend(
 )
 
 # Evalutate model performance
-acf(lmModel$residuals)
 Box.test(lmModel$residuals)
 rmse.lm = rmse(nfl.cumulative2.testing$attendance, lmModel.predict)
 rmse.lm
